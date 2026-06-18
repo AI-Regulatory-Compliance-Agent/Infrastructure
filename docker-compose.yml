@@ -1,8 +1,4 @@
-version: "3.9"
-
 services:
-
-  # ─── Infrastructure ───────────────────────────
 
   postgres:
     image: postgres:16-alpine
@@ -19,10 +15,11 @@ services:
     networks:
       - compliance_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -38,6 +35,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -49,13 +47,6 @@ services:
       - qdrant_data:/qdrant/storage
     networks:
       - compliance_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:6333/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ─── Ingestion ────────────────────────────────
 
   ingestion:
     build:
@@ -68,11 +59,8 @@ services:
     networks:
       - compliance_network
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     restart: "no"
-
-  # ─── Backend ──────────────────────────────────
 
   backend:
     build:
@@ -92,10 +80,8 @@ services:
       redis:
         condition: service_healthy
       qdrant:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
-
-  # ─── Frontend ─────────────────────────────────
 
   frontend:
     build:
@@ -103,21 +89,17 @@ services:
       dockerfile: Dockerfile
     container_name: compliance_frontend
     ports:
-      - "3000:3000"
+      - "5173:5173"
     networks:
       - compliance_network
     depends_on:
       - backend
     restart: unless-stopped
 
-# ─── Volumes ──────────────────────────────────
-
 volumes:
   postgres_data:
   redis_data:
   qdrant_data:
-
-# ─── Network ──────────────────────────────────
 
 networks:
   compliance_network:
