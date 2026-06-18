@@ -72,6 +72,8 @@ services:
       - "8000:8000"
     volumes:
       - ../data:/app/data
+      # Hot reload: mount source code so Uvicorn --reload picks up changes
+      - ../backend/app:/app/app
     networks:
       - compliance_network
     depends_on:
@@ -90,6 +92,10 @@ services:
     container_name: compliance_frontend
     ports:
       - "5173:5173"
+    volumes:
+      # Hot reload: mount source code so Vite picks up changes
+      - ../frontend/src:/app/src
+      - ../frontend/index.html:/app/index.html
     networks:
       - compliance_network
     depends_on:
