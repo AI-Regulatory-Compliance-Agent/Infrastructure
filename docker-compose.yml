@@ -74,6 +74,9 @@ services:
       - ../data:/app/data
       # Hot reload: mount source code so Uvicorn --reload picks up changes
       - ../backend/app:/app/app
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
       - compliance_network
     depends_on:
