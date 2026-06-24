@@ -1,4 +1,4 @@
-<![CDATA[# 🏗️ ComplianceAI — Infrastructure
+# 🏗️ ComplianceAI — Infrastructure
 
 > Docker Compose orchestration for the entire AI Regulatory Compliance Agent stack. Manages 6 services (PostgreSQL, Redis, Qdrant, Ingestion Pipeline, Backend API, Frontend) with health checks, persistent volumes, and custom DNS configuration.
 
@@ -257,4 +257,3 @@ Infrastructure/
 ## License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-]]>
