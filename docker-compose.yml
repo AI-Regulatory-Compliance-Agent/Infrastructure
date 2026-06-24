@@ -80,6 +80,7 @@ services:
       - ../data:/app/data
       - ../backend/app:/app/app
       - ./dns/resolv.conf:/etc/resolv.conf:ro
+      - complianceai_uploads:/data/uploads
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -115,6 +116,7 @@ volumes:
   postgres_data:
   redis_data:
   qdrant_data:
+  complianceai_uploads:
 
 networks:
   compliance_network:
