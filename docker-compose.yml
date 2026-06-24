@@ -54,12 +54,18 @@ services:
       dockerfile: Dockerfile
     container_name: compliance_ingestion
     env_file: .env
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    dns_search: []
     volumes:
       - ../data:/app/data
+      - ./dns/resolv.conf:/etc/resolv.conf:ro
     networks:
       - compliance_network
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_started
     restart: "no"
 
   backend:
@@ -72,11 +78,12 @@ services:
       - "8000:8000"
     volumes:
       - ../data:/app/data
-      # Hot reload: mount source code so Uvicorn --reload picks up changes
       - ../backend/app:/app/app
+      - ./dns/resolv.conf:/etc/resolv.conf:ro
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    dns_search: []
     networks:
       - compliance_network
     depends_on:
@@ -96,7 +103,6 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      # Hot reload: mount source code so Vite picks up changes
       - ../frontend/src:/app/src
       - ../frontend/index.html:/app/index.html
     networks:
