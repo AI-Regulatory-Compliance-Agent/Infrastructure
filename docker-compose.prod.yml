@@ -1,0 +1,78 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: compliance_postgres
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - compliance_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: compliance_redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - compliance_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: compliance_backend
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+      - complianceai_uploads:/data/uploads
+    networks:
+      - compliance_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: compliance_frontend
+    ports:
+      - "80:5173"
+    networks:
+      - compliance_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  complianceai_uploads:
+
+networks:
+  compliance_network:
+    driver: bridge
