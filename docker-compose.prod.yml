@@ -43,6 +43,12 @@ services:
     env_file: .env
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ../data:/app/data
       - complianceai_uploads:/data/uploads
@@ -58,10 +64,15 @@ services:
   frontend:
     build:
       context: ../frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      args:
+        # Public URL the browser uses to reach the backend API.
+        # Set VITE_API_URL in Infrastructure/.env before building,
+        # e.g. VITE_API_URL=http://20.244.40.144:8000
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     container_name: compliance_frontend
     ports:
-      - "80:5173"
+      - "80:80"
     networks:
       - compliance_network
     depends_on:
