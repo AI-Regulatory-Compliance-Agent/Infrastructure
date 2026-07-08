@@ -1,0 +1,30 @@
+# ── Caddy Reverse Proxy — ComplianceAI ───────────────────────
+# Routes:
+#   /api/*  → FastAPI backend (prefix stripped, so /api/health → /health)
+#   /*      → nginx static frontend
+#
+# TLS: Caddy obtains and renews a free Let's Encrypt certificate for
+# the domain automatically (HTTP-01 challenge over port 80).
+#
+# The explicit http:// site keeps the app fully working while NSG
+# port 443 is still closed. Once 443 is open and HTTPS is confirmed
+# working, replace the http:// site body with:
+#     redir https://complianceai.centralindia.cloudapp.azure.com{uri} permanent
+# to force HTTPS for all visitors.
+
+(site) {
+	handle_path /api/* {
+		reverse_proxy backend:8000
+	}
+	handle {
+		reverse_proxy frontend:80
+	}
+}
+
+https://complianceai.centralindia.cloudapp.azure.com {
+	import site
+}
+
+http://complianceai.centralindia.cloudapp.azure.com, http://20.244.40.144 {
+	import site
+}

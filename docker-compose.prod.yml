@@ -41,8 +41,8 @@ services:
       dockerfile: Dockerfile
     container_name: compliance_backend
     env_file: .env
-    ports:
-      - "8000:8000"
+    # No public port — reachable only through the caddy reverse proxy
+    # at /api/*. Reduces attack surface (was 0.0.0.0:8000).
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
@@ -66,23 +66,42 @@ services:
       context: ../frontend
       dockerfile: Dockerfile.prod
       args:
-        # Public URL the browser uses to reach the backend API.
-        # Set VITE_API_URL in Infrastructure/.env before building,
-        # e.g. VITE_API_URL=http://20.244.40.144:8000
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        # API base URL baked into the bundle. "/api" (relative) makes
+        # the browser call the same origin it loaded the page from —
+        # caddy proxies /api/* to the backend. Works over both HTTP
+        # and HTTPS with no CORS preflights.
+        VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: compliance_frontend
-    ports:
-      - "80:80"
+    # No public port — served through the caddy reverse proxy.
     networks:
       - compliance_network
     depends_on:
       - backend
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: compliance_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # Let's Encrypt certificates persist here
+      - caddy_config:/config
+    networks:
+      - compliance_network
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
   complianceai_uploads:
+  caddy_data:
+  caddy_config:
 
 networks:
   compliance_network:
