@@ -6,11 +6,9 @@
 # TLS: Caddy obtains and renews a free Let's Encrypt certificate for
 # the domain automatically (HTTP-01 challenge over port 80).
 #
-# The explicit http:// site keeps the app fully working while NSG
-# port 443 is still closed. Once 443 is open and HTTPS is confirmed
-# working, replace the http:// site body with:
-#     redir https://complianceai.centralindia.cloudapp.azure.com{uri} permanent
-# to force HTTPS for all visitors.
+# HTTPS confirmed working 2026-07-08 (NSG port 443 open, Let's
+# Encrypt cert issued) — all plain-HTTP traffic now permanently
+# redirects to the HTTPS domain.
 
 (site) {
 	handle_path /api/* {
@@ -26,5 +24,5 @@ https://complianceai.centralindia.cloudapp.azure.com {
 }
 
 http://complianceai.centralindia.cloudapp.azure.com, http://20.244.40.144 {
-	import site
+	redir https://complianceai.centralindia.cloudapp.azure.com{uri} permanent
 }
